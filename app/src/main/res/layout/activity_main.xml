@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btn_getSam"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="获取读卡器sam值"/>
+
+        <Button
+            android:id="@+id/btn_12V"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12V继电器"/>
+        <Button
+            android:id="@+id/btn_D10"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="D10继电器"/>
+        <Button
+            android:id="@+id/btn_D5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="D5继电器"/>
+        <Button
+            android:id="@+id/btn_relay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="继电器"/>
+
+
+    </LinearLayout>
+
+
+</RelativeLayout>
