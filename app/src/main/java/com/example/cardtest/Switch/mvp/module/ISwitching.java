@@ -23,17 +23,17 @@ public interface ISwitching {
 
     void onOutD9(boolean status);
 
-    void onBuzz(SwitchImpl.Hex hex);
+    void onBuzz(Hex hex);
 
     void onBuzzOff();
 
-    void on12VRelay(SwitchImpl.Hex hex, boolean status);
+    void on12VRelay(Hex hex, boolean status);
 
-    void onRelay(SwitchImpl.Hex hex, boolean status);
+    void onRelay(Hex hex, boolean status);
 
-    void onD10Relay(SwitchImpl.Hex hex, boolean status);
+    void onD10Relay(Hex hex, boolean status);
 
-    void onD5Relay(SwitchImpl.Hex hex, boolean status);
+    void onD5Relay(Hex hex, boolean status);
 
     void onDoorOpen();
 
