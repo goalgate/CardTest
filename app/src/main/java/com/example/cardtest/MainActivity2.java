@@ -22,6 +22,7 @@ import com.example.cardtest.Switch.mvp.module.SwitchImpl;
 import com.example.cardtest.Switch.mvp.presenter.SwitchPresenter;
 import com.example.cardtest.Switch.mvp.view.ISwitchView;
 import com.example.drv.card.ICardInfo;
+import com.example.log.Lg;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.ys.myapi.MyManager;
 
@@ -117,7 +118,7 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
 
         mMyManager = MyManager.getInstance(this);
         mMyManager.bindAIDLService(this);
-        Observable.interval(0, 5, TimeUnit.SECONDS)
+        Observable.interval(0, 1800, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe((l) -> mSwitchPresenter.readHum());
 
@@ -280,6 +281,8 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
 
     @Override
     public void onTemHum(int temperature, int humidity) {
+        Lg.e("sw_temperature", String.valueOf(temperature));
+        Lg.e("sw_humidity", String.valueOf(humidity));
 
 
 

@@ -3,7 +3,7 @@ package com.example.cardtest.Switch.mvp.presenter;
 
 import com.example.cardtest.Switch.mvp.module.ISwitching;
 import com.example.cardtest.Switch.mvp.module.SwitchImpl;
-import com.example.cardtest.Switch.mvp.module.SwitchImpl3;
+import com.example.cardtest.Switch.mvp.module.SwitchImpl4;
 import com.example.cardtest.Switch.mvp.view.ISwitchView;
 
 /**
@@ -29,7 +29,7 @@ public class SwitchPresenter {
         this.view = view;
     }
 
-    ISwitching switchingModule = new SwitchImpl3();
+    ISwitching switchingModule = new SwitchImpl4();
 
     public void switch_Open() {
         switchingModule.onOpen(new ISwitching.ISwitchingListener() {
