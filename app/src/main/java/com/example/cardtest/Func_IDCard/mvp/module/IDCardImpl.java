@@ -6,7 +6,7 @@ import android.util.Log;
 
 import com.example.drv.card.ICardInfo;
 import com.example.drv.card.ICardState;
-import com.example.drv.card.ReadCard;
+import com.example.drv.card.ReadCard2;
 import com.example.log.Lg;
 
 /**
@@ -23,8 +23,8 @@ public class IDCardImpl implements IIDCard {
     public void onOpen(IIdCardListener listener) {
         mylistener = listener;
         try {
-            cardInfo = new ReadCard(115200, "/dev/ttyS1", m_onCardState);
-//
+            cardInfo = new ReadCard2(115200, "/dev/ttyS1", m_onCardState);
+
 //            cardInfo = new CardInfo3("/dev/ttyS1", m_onCardState);
 //            cardInfo.setDevType("rk3368");
             cdevfd = cardInfo.open();

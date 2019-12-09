@@ -16,6 +16,7 @@ import com.blankj.utilcode.util.NetworkUtils;
 import com.blankj.utilcode.util.SPUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.example.Tool.AssetsUtils;
+import com.example.Tool.NetInfo;
 import com.example.cardtest.Func_IDCard.mvp.presenter.IDCardPresenter;
 import com.example.cardtest.Func_IDCard.mvp.view.IIDCardView;
 import com.example.cardtest.Switch.mvp.module.SwitchImpl;
@@ -33,14 +34,13 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISwitchView {
     IDCardPresenter mIDCardPresenter = IDCardPresenter.getInstance();
 
     SwitchPresenter mSwitchPresenter = SwitchPresenter.getInstance();
-
-
-    Disposable disposableTips;
 
 
     public static final String STATICIP = "StaticIp";
@@ -66,6 +66,7 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
     Button btn_light;
     TextView tv_info;
     TextView tv_switch;
+    TextView tv_mac;
     ImageView headphoto;
     MyManager mMyManager;
 
@@ -78,7 +79,7 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
         setContentView(R.layout.activity_main1);
         if (config.getBoolean("firstStart", true)) {
             AssetsUtils.getInstance(AppInit.getContext()).copyAssetsToSD("wltlib", "wltlib");
-            config.put("firstStart",false);
+            config.put("firstStart", false);
         }
 
 
@@ -108,8 +109,9 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
         btn_light.setOnClickListener(mOnClickListener);
         tv_info = (TextView) findViewById(R.id.tv_info);
         tv_switch = (TextView) findViewById(R.id.tv_switch);
-        mSurfaceView1 = (SurfaceView)findViewById(R.id.surface1);
-        mSurfaceView2 = (SurfaceView)findViewById(R.id.surface2);
+        tv_mac = (TextView) findViewById(R.id.tv_mac);
+        mSurfaceView1 = (SurfaceView) findViewById(R.id.surface1);
+        mSurfaceView2 = (SurfaceView) findViewById(R.id.surface2);
 
         headphoto = (ImageView) findViewById(R.id.iv_headphoto);
         mIDCardPresenter.idCardOpen();
@@ -122,12 +124,35 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe((l) -> mSwitchPresenter.readHum());
 
-        disposableTips = RxTextView.textChanges(tv_info)
-                .debounce(15, TimeUnit.SECONDS)
-                .switchMap(charSequence -> Observable.just("等待用户操作..."))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe((s) -> tv_info.setText(s));
+        tv_mac.setText("WIFIMac:" + new NetInfo().getWifiMac() + "\n" +
+                "ethMac" + new NetInfo().getMac());
 
+
+        CircleOperation();
+    }
+
+    private void CircleOperation() {
+        Observable.interval(0, 5, TimeUnit.MINUTES).
+                subscribeOn(Schedulers.io()).unsubscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(new Consumer<Long>() {
+                    @Override
+                    public void accept(Long aLong) throws Exception {
+                        mSwitchPresenter.relay(SwitchImpl.Relay.relay_12V, SwitchImpl.Hex.H0, true);
+                        Thread.sleep(1000);
+                        mSwitchPresenter.relay(SwitchImpl.Relay.relay_12V, SwitchImpl.Hex.H0, false);
+                        Thread.sleep(1000);
+                        mSwitchPresenter.greenLight();
+                        Thread.sleep(1000);
+                        mSwitchPresenter.redLight();
+                        Thread.sleep(1000);
+                        mSwitchPresenter.WhiteLighrOn();
+                        Thread.sleep(1000);
+                        mSwitchPresenter.WhiteLighrOff();
+                        Thread.sleep(1000);
+                        mIDCardPresenter.readCard();
+                    }
+                });
     }
 
     @Override
@@ -140,7 +165,7 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
     }
 
 
-    boolean status_12V, status_relay, status_D10, status_D5 ,eth0 ,light= false;
+    boolean status_12V, status_relay, status_D10, status_D5, eth0, light = false;
     View.OnClickListener mOnClickListener = v -> {
         switch (v.getId()) {
             case R.id.btn_getSam:
@@ -156,7 +181,6 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
                 break;
             case R.id.btn_relay:
                 status_relay = !status_relay;
-
                 mSwitchPresenter.relay(SwitchImpl.Relay.relay_relay, SwitchImpl.Hex.H0, status_relay);
                 break;
             case R.id.btn_12V:
@@ -168,19 +192,19 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
                 this.sendBroadcast(intent);
                 break;
             case R.id.btn_static:
-                mMyManager.setStaticEthIPAddress("192.168.1.122", "192.168.1.1", "255.255.255.0", "192.168.1.1", "192" +
+                mMyManager.setStaticEthIPAddress("192.168.1.122", "255.255.255.0", "192.168.1.1", "192.168.1.1", "192" +
                         ".168.1.1");
-                Observable.timer(1,TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
-                        .subscribe((l)->{
-                            if(NetworkUtils.getIPAddress(true)!=null){
-                                if(NetworkUtils.getIPAddress(true).endsWith("122")){
-                                    ToastUtils.showLong("IP地址为"+NetworkUtils.getIPAddress(true)+",正确的期望静态IP地址,静态IP设置成功");
-                                    writeFileSdcard(ethernet,STATICIP);
-                                }else{
-                                    ToastUtils.showLong("IP地址为"+NetworkUtils.getIPAddress(true)+",错误的期望静态IP地址,正在前往网络设置确认");
+                Observable.timer(1, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
+                        .subscribe((l) -> {
+                            if (NetworkUtils.getIPAddress(true) != null) {
+                                if (NetworkUtils.getIPAddress(true).endsWith("122")) {
+                                    ToastUtils.showLong("IP地址为" + NetworkUtils.getIPAddress(true) + ",正确的期望静态IP地址,静态IP设置成功");
+                                    writeFileSdcard(ethernet, STATICIP);
+                                } else {
+                                    ToastUtils.showLong("IP地址为" + NetworkUtils.getIPAddress(true) + ",错误的期望静态IP地址,正在前往网络设置确认");
                                     NetworkUtils.openWirelessSettings();
                                 }
-                            }else{
+                            } else {
                                 ToastUtils.showLong("已尝试设置静态IP为192.168.1.122,正在前往网络设置确认");
                                 NetworkUtils.openWirelessSettings();
                             }
@@ -188,16 +212,17 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
                 break;
             case R.id.btn_dhcp:
                 mMyManager.setDhcpIpAddress(this);
-                Observable.timer(1,TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
-                        .subscribe((l)->{
-                            if(NetworkUtils.getIPAddress(true)!=null){
-                                if(!NetworkUtils.getIPAddress(true).endsWith("122")){
-                                    ToastUtils.showLong("IP地址为"+NetworkUtils.getIPAddress(true)+",与静态设置的122不同,动态IP设置成功");
-                                    writeFileSdcard(ethernet,DHCP);
-                                }else{
-                                    ToastUtils.showLong("IP地址为"+NetworkUtils.getIPAddress(true)+",与静态设置的122相同,正在前往网络设置确认");
+                Observable.timer(1, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
+                        .subscribe((l) -> {
+                            if (NetworkUtils.getIPAddress(true) != null) {
+                                if (!NetworkUtils.getIPAddress(true).endsWith("122")) {
+                                    ToastUtils.showLong("IP地址为" + NetworkUtils.getIPAddress(true) + ",与静态设置的122不同,动态IP设置成功");
+                                    writeFileSdcard(ethernet, DHCP);
+                                } else {
+                                    ToastUtils.showLong("IP地址为" + NetworkUtils.getIPAddress(true) + ",与静态设置的122相同,正在前往网络设置确认");
                                     NetworkUtils.openWirelessSettings();
-                                }                            }else{
+                                }
+                            } else {
                                 ToastUtils.showLong("已尝试设置动态IP模式,正在前往网络设置确认");
                                 NetworkUtils.openWirelessSettings();
                             }
@@ -205,9 +230,9 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
 
                 break;
             case R.id.btn_eth0:
-                if(eth0){
+                if (eth0) {
                     ToastUtils.showLong("网口已开启，请连接网线查看图标");
-                }else{
+                } else {
                     ToastUtils.showLong("网口已被关闭，请连接网线查看图标");
                 }
                 mMyManager.ethEnabled(eth0);
@@ -220,10 +245,10 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
                 mSwitchPresenter.redLight();
                 break;
             case R.id.btn_light:
-                light =!light;
-                if(light){
+                light = !light;
+                if (light) {
                     mSwitchPresenter.WhiteLighrOn();
-                }else {
+                } else {
                     mSwitchPresenter.WhiteLighrOff();
                 }
                 break;
@@ -242,17 +267,23 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
         mIDCardPresenter.StopReadIC();
     }
 
+    static int Success_IDCount = 0;
+
+    static int Failed_IDCount = 0;
 
     @Override
     public void onsetCardImg(Bitmap bmp) {
-        if(bmp==null){
+        if (bmp == null) {
             tv_info.setText("警告，没有身份证照片，可能获取身份证延时不足或者没有wltlib文件夹");
-        }else{
+            Failed_IDCount++;
+        } else {
+            Success_IDCount++;
             headphoto.setImageBitmap(bmp);
             headphoto.setVisibility(View.VISIBLE);
-            Observable.timer(1,TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
-            .subscribe((l)->headphoto.setVisibility(View.GONE));
+            Observable.timer(1, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
+                    .subscribe((l) -> headphoto.setVisibility(View.GONE));
         }
+        tv_info.setText("成功刷卡: " +Success_IDCount+" 次；失败刷卡: "+ Failed_IDCount+" 次");
 
     }
 
@@ -275,7 +306,6 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
 
     @Override
     public void onSwitchingText(String value) {
-
         tv_switch.setText(value);
     }
 
@@ -285,7 +315,6 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
         Lg.e("sw_humidity", String.valueOf(humidity));
 
 
-
     }
 
     @Override
@@ -293,20 +322,18 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
         super.onDestroy();
         mIDCardPresenter.idCardClose();
         mSwitchPresenter.Close();
-        disposableTips.dispose();
         mMyManager.unBindAIDLService(this);
 
     }
 
     public static void writeFileSdcard(String fileName, String message) {
-        String file_pre = Environment.getExternalStorageDirectory().getAbsolutePath()+ File.separator;
+        String file_pre = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator;
         try {
-            FileOutputStream fout = new FileOutputStream(file_pre+fileName);
+            FileOutputStream fout = new FileOutputStream(file_pre + fileName);
             byte[] bytes = message.getBytes();
             fout.write(bytes);
             fout.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

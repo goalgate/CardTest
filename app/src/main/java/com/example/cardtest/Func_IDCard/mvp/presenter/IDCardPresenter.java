@@ -79,4 +79,5 @@ public class IDCardPresenter {
     public void ReadIC() {
         idCardModule.onReadICCard();
     }
+
 }

@@ -21,7 +21,7 @@ import android_serialport_api.SerialPort;
 /**
  * 当前类注释:
  *
- * @author zhenyanjun
+ * @author wzw
  * @date 2019/8/6 16:56
  */
 public class ReadCard implements ICardInfo {
@@ -67,6 +67,9 @@ public class ReadCard implements ICardInfo {
             0x55};
     //设置TypeA协议
     private byte[] dt_ica_set = new byte[]{0x02, 0x02, 0x03, 0x00, 0x08, 0x01, 0x41, 0x20, 0x62, 0x55};
+    private byte[] dt_ica_setB = new byte[]{0x02, 0x02, 0x03, 0x00, 0x08, 0x01, 0x42, 0x60, 0x63, 0x55};
+
+
     //返回成功命令
     private byte[] dt_Success = new byte[]{0x02, 0x02, 0x01, 0x00, 0x00, 0x20, 0x00};
 
@@ -140,7 +143,7 @@ public class ReadCard implements ICardInfo {
 
     @Override
     public int open() {
-        int ix = devOpen(115200, "/dev/ttyS1");
+        int ix = devOpen(115200, devName);
         if (ix >= 0) {
             picUnpack = new CVRApi(cvrHandler);
         }
@@ -244,7 +247,7 @@ public class ReadCard implements ICardInfo {
                                 Lg.e("card天线开启", "天线开启失败");
                             }
                         }, 50);
-                        sendandread(dt_ica_set, readBuffer, () -> {
+                        sendandread(dt_ica_setB, readBuffer, () -> {
                             System.arraycopy(readBuffer, 2, readBuffer, 0, readBuffer.length - 4);
                             if (CRC16.getCRC3(readBuffer, ((readBuffer[1] << 8)
                                     + readBuffer[0]) + 2).equals("2000")) {
