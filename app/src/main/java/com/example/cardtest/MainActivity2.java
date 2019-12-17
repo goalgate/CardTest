@@ -70,8 +70,6 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
     ImageView headphoto;
     MyManager mMyManager;
 
-    SurfaceView mSurfaceView1;
-    SurfaceView mSurfaceView2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,8 +108,6 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
         tv_info = (TextView) findViewById(R.id.tv_info);
         tv_switch = (TextView) findViewById(R.id.tv_switch);
         tv_mac = (TextView) findViewById(R.id.tv_mac);
-        mSurfaceView1 = (SurfaceView) findViewById(R.id.surface1);
-        mSurfaceView2 = (SurfaceView) findViewById(R.id.surface2);
 
         headphoto = (ImageView) findViewById(R.id.iv_headphoto);
         mIDCardPresenter.idCardOpen();
@@ -126,13 +122,11 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
 
         tv_mac.setText("WIFIMac:" + new NetInfo().getWifiMac() + "\n" +
                 "ethMac" + new NetInfo().getMac());
-
-
         CircleOperation();
     }
 
     private void CircleOperation() {
-        Observable.interval(0, 5, TimeUnit.MINUTES).
+        Observable.interval(0, 2, TimeUnit.MINUTES).
                 subscribeOn(Schedulers.io()).unsubscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .subscribe(new Consumer<Long>() {

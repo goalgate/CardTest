@@ -152,7 +152,8 @@ public class ReadCard2 implements ICardInfo {
 
     @Override
     public void close() {
-        thread_continuous =false;
+        sam_get = false;
+        thread_continuous = false;
         if (devfd != -1) {
             rkSerial_.close();
             devfd = -1;
@@ -187,6 +188,7 @@ public class ReadCard2 implements ICardInfo {
 
 
     CardThread mCardThread;
+
     public int devOpen(int sp, String devName_) {
         try {
             rkSerial_ = new SerialPort(new File(devName_), sp, 0);
@@ -198,7 +200,7 @@ public class ReadCard2 implements ICardInfo {
             Lg.e("card_dev", e.toString());
         }
         //        Lg.e("SDs", CRC16.getCRC3(dt_Success2,((dt_Success2[1]<<8)+dt_Success2[0])+2));
-        if(mCardThread==null){
+        if (mCardThread == null) {
             mCardThread = new CardThread();
             thread_continuous = true;
             mCardThread.start();
@@ -210,63 +212,66 @@ public class ReadCard2 implements ICardInfo {
     boolean ic_continuous = false;
     boolean id_continuous = false;
 
-    boolean thread_continuous =false;
+    boolean thread_continuous = false;
     byte[] readBuffer = new byte[2048];
-
-
+    boolean sam_get = false;
 
     private class CardThread extends Thread {
         @Override
         public void run() {
             super.run();
-            if(useID){
-                try {
-                    sendandread(dt_sam,readBuffer,()->{
-                        System.arraycopy(readBuffer,0,buf_,0,readBuffer.length);
-                        getSam_();
-                    },100);
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
             while (thread_continuous) {
+                if (useID&&!sam_get) {
+                    try {
+
+                        sendandread(dt_sam, readBuffer, () -> {
+                            System.arraycopy(readBuffer, 0, buf_, 0, readBuffer.length);
+                            getSam_();
+                            sam_get = true;
+                        }, 100);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
                 if (mInputStream != null && mOutputStream != null) {
                     try {
-                        sendandread(dt_antenna_close, readBuffer, () -> {
-                            System.arraycopy(readBuffer, 2, readBuffer, 0, readBuffer.length - 4);
-                            if (CRC16.getCRC3(readBuffer, ((readBuffer[1] << 8)
-                                    + readBuffer[0]) + 2).equals("2000")) {
-                                Lg.e("card天线关闭", "天线关闭成功");
-                            } else {
-                                Lg.e("card天线关闭", "天线关闭失败");
-                            }
-                        }, 50);
-                        sendandread(dt_antenna_open, readBuffer, () -> {
-                            System.arraycopy(readBuffer, 2, readBuffer, 0, readBuffer.length - 4);
-                            if (CRC16.getCRC3(readBuffer, ((readBuffer[1] << 8)
-                                    + readBuffer[0]) + 2).equals("2000")) {
-                                Lg.e("card天线开启", "天线开启成功");
-                            } else {
-                                Lg.e("card天线开启", "天线开启失败");
-                            }
-                        }, 50);
-                        sendandread(dt_ica_set, readBuffer, () -> {
-                            System.arraycopy(readBuffer, 2, readBuffer, 0, readBuffer.length - 4);
-                            if (CRC16.getCRC3(readBuffer, ((readBuffer[1] << 8)
-                                    + readBuffer[0]) + 2).equals("2000")) {
-                                Lg.e("cardTYBEA设置", "TYBEA设置成功");
-                            } else {
-                                Lg.e("cardTYBEA设置", "TYBEA设置失败");
-                            }
-                        }, 50);
-                        if(useIC){
+                        if (useIC) {
+                            sendandread(dt_antenna_close, readBuffer, () -> {
+                                System.arraycopy(readBuffer, 2, readBuffer, 0, readBuffer.length - 4);
+                                if (CRC16.getCRC3(readBuffer, ((readBuffer[1] << 8)
+                                        + readBuffer[0]) + 2).equals("2000")) {
+                                    Lg.e("card天线关闭", "天线关闭成功");
+                                } else {
+                                    Lg.e("card天线关闭", "天线关闭失败");
+                                }
+                            }, 50);
+                            sendandread(dt_antenna_open, readBuffer, () -> {
+                                System.arraycopy(readBuffer, 2, readBuffer, 0, readBuffer.length - 4);
+                                if (CRC16.getCRC3(readBuffer, ((readBuffer[1] << 8)
+                                        + readBuffer[0]) + 2).equals("2000")) {
+                                    Lg.e("card天线开启", "天线开启成功");
+                                } else {
+                                    Lg.e("card天线开启", "天线开启失败");
+                                }
+                            }, 50);
+                            sendandread(dt_ica_set, readBuffer, () -> {
+                                System.arraycopy(readBuffer, 2, readBuffer, 0, readBuffer.length - 4);
+                                if (CRC16.getCRC3(readBuffer, ((readBuffer[1] << 8)
+                                        + readBuffer[0]) + 2).equals("2000")) {
+                                    Lg.e("cardTYBEA设置", "TYBEA设置成功");
+                                } else {
+                                    Lg.e("cardTYBEA设置", "TYBEA设置失败");
+                                }
+                            }, 50);
+
                             sendandread(dt_ica_read, readBuffer, () -> {
                                 System.arraycopy(readBuffer, 2, readBuffer, 0, readBuffer.length - 4);
                                 if (readBuffer[0] >= 0x08 && !ic_continuous) {
                                     ic_continuous = true;
                                     System.arraycopy(readBuffer, 5, readBuffer, 0, 4);
                                     uid_ = byteToStr(readBuffer, 4).toUpperCase();
-                                    readType_ = uidget; readState_ = 1;
+                                    readType_ = uidget;
+                                    readState_ = 1;
                                     mHandler.sendEmptyMessage(0);
                                     Lg.e("cardIC读卡", "IC卡已读");
                                 } else if (CRC16.getCRC3(readBuffer, ((readBuffer[1] << 8)
@@ -276,7 +281,7 @@ public class ReadCard2 implements ICardInfo {
                                     IDCardOperation();
                                 }
                             }, 100);
-                        }else{
+                        } else {
                             IDCardOperation();
 
                         }
@@ -290,7 +295,7 @@ public class ReadCard2 implements ICardInfo {
 
 
     private void IDCardOperation() {
-        if(useID){
+        if (useID) {
             try {
                 sendandread(dt_antenna_close, readBuffer, () -> {
                     System.arraycopy(readBuffer, 2, readBuffer, 0, readBuffer.length - 4);
@@ -356,7 +361,7 @@ public class ReadCard2 implements ICardInfo {
                     } else {
                         if ((readBuffer[5] << 8) + readBuffer[6] == 1288) {
                             Log.e("cardID读卡", "读卡成功");
-                            System.arraycopy(readBuffer,0,buf_,0,readBuffer.length);
+                            System.arraycopy(readBuffer, 0, buf_, 0, readBuffer.length);
                             readCerd();
                             id_continuous = true;
                         } else {
@@ -449,7 +454,8 @@ public class ReadCard2 implements ICardInfo {
         } catch (Exception ex) {
             Lg.e("CardInfo_readCerd", ex.toString());
         }
-        readType_ = cardInfoget; readState_ = 1;
+        readType_ = cardInfoget;
+        readState_ = 1;
         mHandler.sendEmptyMessage(0);
 
     }
@@ -467,7 +473,8 @@ public class ReadCard2 implements ICardInfo {
 
     @Override
     public void readSam() {
-        readType_ = samget; readState_ = 1;
+        readType_ = samget;
+        readState_ = 1;
         mHandler.sendEmptyMessage(0);
     }
 
