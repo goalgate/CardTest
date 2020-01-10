@@ -18,7 +18,7 @@ import android_serialport_api.SerialPort;
  * @author wzw
  * @date 2019/8/13 09:28
  */
-public class SwitchImpl4 implements ISwitching {
+public class BoyaSwitchImpl implements ISwitching {
     private byte[] buf_ = new byte[2048];
     private int bufCount = 0;
     private int checkCount_ = 0;

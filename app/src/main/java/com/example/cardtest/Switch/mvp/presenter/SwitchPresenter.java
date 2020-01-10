@@ -1,9 +1,9 @@
 package com.example.cardtest.Switch.mvp.presenter;
 
 
+import com.example.cardtest.AppInit;
 import com.example.cardtest.Switch.mvp.module.ISwitching;
-import com.example.cardtest.Switch.mvp.module.SwitchImpl;
-import com.example.cardtest.Switch.mvp.module.SwitchImpl4;
+import com.example.cardtest.Switch.mvp.module.BoyaSwitchImpl;
 import com.example.cardtest.Switch.mvp.view.ISwitchView;
 
 /**
@@ -29,7 +29,7 @@ public class SwitchPresenter {
         this.view = view;
     }
 
-    ISwitching switchingModule = new SwitchImpl4();
+    ISwitching switchingModule = AppInit.getInstrumentConfig().switchImpl();
 
     public void switch_Open() {
         switchingModule.onOpen(new ISwitching.ISwitchingListener() {
@@ -61,7 +61,7 @@ public class SwitchPresenter {
         switchingModule.onOutD9(isOn);
     }
 
-    public void buzz(SwitchImpl.Hex hex) {
+    public void buzz(ISwitching.Hex hex) {
         switchingModule.onBuzz(hex);
     }
 
@@ -93,7 +93,7 @@ public class SwitchPresenter {
         switchingModule.onClose();
     }
 
-    public void relay(SwitchImpl.Relay relay, SwitchImpl.Hex hex, boolean status) {
+    public void relay(ISwitching.Relay relay, ISwitching.Hex hex, boolean status) {
         switch (relay) {
             case relay_D5:
                 switchingModule.onD5Relay(hex, status);

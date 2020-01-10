@@ -4,6 +4,7 @@ package com.example.cardtest.Func_IDCard.mvp.module;
 import android.graphics.Bitmap;
 import android.util.Log;
 
+import com.example.cardtest.AppInit;
 import com.example.drv.card.BoyaCardAdapter;
 import com.example.drv.card.ICardInfo;
 import com.example.drv.card.ICardState;
@@ -24,8 +25,7 @@ public class IDCardImpl implements IIDCard {
     public void onOpen(IIdCardListener listener) {
         mylistener = listener;
         try {
-            cardInfo = new BoyaCardAdapter(115200, "/dev/ttyS1", m_onCardState);
-
+            cardInfo = new ReadCard2(115200, AppInit.getInstrumentConfig().cardPort(), m_onCardState);
 //            cardInfo = new CardInfo3("/dev/ttyS1", m_onCardState);
 //            cardInfo.setDevType("rk3368");
             cdevfd = cardInfo.open();

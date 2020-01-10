@@ -1,11 +1,9 @@
 package com.example.cardtest;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -15,17 +13,14 @@ import android.widget.Toast;
 import com.blankj.utilcode.util.NetworkUtils;
 import com.blankj.utilcode.util.SPUtils;
 import com.blankj.utilcode.util.ToastUtils;
-import com.example.Tool.AssetsUtils;
-import com.example.Tool.NetInfo;
+import com.example.cardtest.Tool.AssetsUtils;
+import com.example.cardtest.Tool.NetInfo;
 import com.example.cardtest.Func_IDCard.mvp.presenter.IDCardPresenter;
 import com.example.cardtest.Func_IDCard.mvp.view.IIDCardView;
-import com.example.cardtest.Switch.mvp.module.SwitchImpl;
-import com.example.cardtest.Switch.mvp.presenter.SwitchPresenter;
-import com.example.cardtest.Switch.mvp.view.ISwitchView;
 import com.example.drv.card.ICardInfo;
-import com.example.log.Lg;
-import com.jakewharton.rxbinding2.widget.RxTextView;
-import com.ys.myapi.MyManager;
+import com.example.yfaceapi.GPIOManager;
+import com.example.yfaceapi.GpioUtils;
+import com.ys.rkapi.MyManager;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -33,15 +28,9 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.schedulers.Schedulers;
 
-public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISwitchView {
+public class YiShengMainActivity extends AppCompatActivity implements IIDCardView {
     IDCardPresenter mIDCardPresenter = IDCardPresenter.getInstance();
-
-    SwitchPresenter mSwitchPresenter = SwitchPresenter.getInstance();
-
 
     public static final String STATICIP = "StaticIp";
 
@@ -49,14 +38,10 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
 
     public static final String ethernet = "ethernet";
 
-    private SPUtils config = SPUtils.getInstance("config");
-
-
     Button btn_getSam;
-    Button btn_12V;
-    Button btn_D10;
-    Button btn_D5;
     Button btn_relay;
+    Button btn_IR;
+    Button btn_Voice;
     Button btn_reboot;
     Button btn_static;
     Button btn_dhcp;
@@ -74,23 +59,15 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main1);
-        if (config.getBoolean("firstStart", true)) {
-            AssetsUtils.getInstance(AppInit.getContext()).copyAssetsToSD("wltlib", "wltlib");
-            config.put("firstStart", false);
-        }
-
-
+        setContentView(R.layout.ys_activity_main);
         btn_getSam = (Button) findViewById(R.id.btn_getSam);
         btn_getSam.setOnClickListener(mOnClickListener);
-        btn_D10 = (Button) findViewById(R.id.btn_D10);
-        btn_D10.setOnClickListener(mOnClickListener);
-        btn_12V = (Button) findViewById(R.id.btn_12V);
-        btn_12V.setOnClickListener(mOnClickListener);
-        btn_D5 = (Button) findViewById(R.id.btn_D5);
-        btn_D5.setOnClickListener(mOnClickListener);
+        btn_IR = (Button) findViewById(R.id.btn_IR);
+        btn_IR.setOnClickListener(mOnClickListener);
         btn_relay = (Button) findViewById(R.id.btn_relay);
         btn_relay.setOnClickListener(mOnClickListener);
+        btn_Voice = (Button) findViewById(R.id.btn_Voice);
+        btn_Voice.setOnClickListener(mOnClickListener);
         btn_reboot = (Button) findViewById(R.id.btn_reboot);
         btn_reboot.setOnClickListener(mOnClickListener);
         btn_static = (Button) findViewById(R.id.btn_static);
@@ -111,42 +88,50 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
 
         headphoto = (ImageView) findViewById(R.id.iv_headphoto);
         mIDCardPresenter.idCardOpen();
-        mSwitchPresenter.switch_Open();
 
 
         mMyManager = MyManager.getInstance(this);
         mMyManager.bindAIDLService(this);
-        Observable.interval(0, 1800, TimeUnit.SECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe((l) -> mSwitchPresenter.readHum());
 
         tv_mac.setText("WIFIMac:" + new NetInfo().getWifiMac() + "\n" +
                 "ethMac" + new NetInfo().getMac());
-        CircleOperation();
+        SwitchOperation();
     }
 
-    private void CircleOperation() {
-        Observable.interval(0, 2, TimeUnit.MINUTES).
-                subscribeOn(Schedulers.io()).unsubscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
-                .subscribe(new Consumer<Long>() {
-                    @Override
-                    public void accept(Long aLong) throws Exception {
-                        mSwitchPresenter.relay(SwitchImpl.Relay.relay_12V, SwitchImpl.Hex.H0, true);
-                        Thread.sleep(1000);
-                        mSwitchPresenter.relay(SwitchImpl.Relay.relay_12V, SwitchImpl.Hex.H0, false);
-                        Thread.sleep(1000);
-                        mSwitchPresenter.greenLight();
-                        Thread.sleep(1000);
-                        mSwitchPresenter.redLight();
-                        Thread.sleep(1000);
-                        mSwitchPresenter.WhiteLighrOn();
-                        Thread.sleep(1000);
-                        mSwitchPresenter.WhiteLighrOff();
-                        Thread.sleep(1000);
-                        mIDCardPresenter.readCard();
+
+    private void SwitchOperation(){
+        int index = 163;
+        GpioUtils.upgradeRootPermissionForGpio(index);
+        String status = GpioUtils.getGpioDirection(index);
+        if ("".equals(status)){
+            ToastUtils.showLong("无效的GPIO");
+            return;
+        }
+        if(GpioUtils.setGpioDirection(index, 1)){
+            new Thread(()->{
+                while (true) {
+                    try {
+                        runOnUiThread(()->{
+                            String text;
+                            if (GpioUtils.getGpioValue(index).equals("0")){
+                                text ="当前处于开门状态";
+                            }else{
+                                text ="当前处于关门状态";
+                            }
+                            runOnUiThread(()->tv_switch.setText(text));
+                        });
+                        Thread.sleep(500);
+                    }catch (InterruptedException e){
+                        e.printStackTrace();
                     }
-                });
+
+                }
+            }).start();
+        }else{
+            ToastUtils.showLong("无法设置该IO口为输入口");
+            return;
+        }
+
     }
 
     @Override
@@ -155,11 +140,10 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
         mIDCardPresenter.readCard();
         mIDCardPresenter.ReadIC();
         mIDCardPresenter.IDCardPresenterSetView(this);
-        mSwitchPresenter.SwitchPresenterSetView(this);
     }
 
 
-    boolean status_12V, status_relay, status_D10, status_D5, eth0, light = false;
+    boolean status_12V, status_relay, status_D10, status_D5, eth0, green,red,light = false;
     View.OnClickListener mOnClickListener = v -> {
         switch (v.getId()) {
             case R.id.btn_getSam:
@@ -167,23 +151,33 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
                 break;
             case R.id.btn_D10:
                 status_D10 = !status_D10;
-                mSwitchPresenter.relay(SwitchImpl.Relay.relay_D10, SwitchImpl.Hex.H0, status_D10);
+
+                if(status_D10){
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullUpInfraredLed();
+                }else {
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullDownInfraredLed();
+
+                }
                 break;
             case R.id.btn_D5:
                 status_D5 = !status_D5;
-                mSwitchPresenter.relay(SwitchImpl.Relay.relay_D5, SwitchImpl.Hex.H0, status_D5);
-                break;
-            case R.id.btn_relay:
-                status_relay = !status_relay;
-                mSwitchPresenter.relay(SwitchImpl.Relay.relay_relay, SwitchImpl.Hex.H0, status_relay);
+                if(status_D5){
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullUpVoice();
+                }else {
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullDownVoice();
+
+                }
+
                 break;
             case R.id.btn_12V:
                 status_12V = !status_12V;
-                mSwitchPresenter.relay(SwitchImpl.Relay.relay_12V, SwitchImpl.Hex.H0, status_12V);
-                break;
+                if(status_12V){
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullUpRelay();
+                }else {
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullDownRelay();
+                }                break;
             case R.id.btn_reboot:
-                Intent intent = new Intent("com.xs.reboot");
-                this.sendBroadcast(intent);
+                mMyManager.reboot();
                 break;
             case R.id.btn_static:
                 mMyManager.setStaticEthIPAddress("192.168.1.122", "255.255.255.0", "192.168.1.1", "192.168.1.1", "192" +
@@ -233,23 +227,32 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
                 eth0 = !eth0;
                 break;
             case R.id.btn_greenlight:
-                mSwitchPresenter.greenLight();
+                green = !green;
+                if (green){
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullUpGreenLight();
+                }else {
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullDownGreenLight();
+                }
                 break;
             case R.id.btn_redlight:
-                mSwitchPresenter.redLight();
+                red = !red;
+                if (red){
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullUpRedLight();
+                }else {
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullDownRedLight();
+                }
                 break;
             case R.id.btn_light:
                 light = !light;
                 if (light) {
-                    mSwitchPresenter.WhiteLighrOn();
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullUpWhiteLight();
+
                 } else {
-                    mSwitchPresenter.WhiteLighrOff();
+                    GPIOManager.getInstance(YiShengMainActivity.this).pullDownWhiteLight();
                 }
                 break;
             default:
                 break;
-
-
         }
 
     };
@@ -277,7 +280,7 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
             Observable.timer(1, TimeUnit.SECONDS).observeOn(AndroidSchedulers.mainThread())
                     .subscribe((l) -> headphoto.setVisibility(View.GONE));
         }
-        tv_info.setText("成功刷卡: " +Success_IDCount+" 次；失败刷卡: "+ Failed_IDCount+" 次");
+        tv_info.setText("成功刷卡: " + Success_IDCount + " 次；失败刷卡: " + Failed_IDCount + " 次");
 
     }
 
@@ -299,23 +302,9 @@ public class MainActivity2 extends AppCompatActivity implements IIDCardView, ISw
     }
 
     @Override
-    public void onSwitchingText(String value) {
-        tv_switch.setText(value);
-    }
-
-    @Override
-    public void onTemHum(int temperature, int humidity) {
-        Lg.e("sw_temperature", String.valueOf(temperature));
-        Lg.e("sw_humidity", String.valueOf(humidity));
-
-
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
         mIDCardPresenter.idCardClose();
-        mSwitchPresenter.Close();
         mMyManager.unBindAIDLService(this);
 
     }
