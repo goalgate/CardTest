@@ -32,7 +32,7 @@ public class AppInit extends Application {
         super.onCreate();
         instance = this;
 
-        InstrumentConfig = new BoyaConfig();
+        InstrumentConfig = new MC_Config();
 
         Utils.init(getContext());
 

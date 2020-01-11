@@ -4,19 +4,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-<!--    <com.example.cardtest.Camera.CameraSurfaceViews-->
-<!--        android:id="@+id/surface1"-->
-<!--        android:layout_width="250dp"-->
-<!--        android:layout_height="250dp"-->
-<!--        android:layout_alignParentLeft="true"-->
-<!--        android:layout_alignParentBottom="true"/>-->
+    <com.example.cardtest.Camera.CameraSurfaceViews
+        android:id="@+id/surface1"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"/>
 
-<!--    <com.example.cardtest.Camera.CameraSurfaceViews2-->
-<!--        android:id="@+id/surface2"-->
-<!--        android:layout_width="250dp"-->
-<!--        android:layout_height="250dp"-->
-<!--        android:layout_alignParentRight="true"-->
-<!--        android:layout_alignParentBottom="true"/>-->
+    <com.example.cardtest.Camera.CameraSurfaceViews2
+        android:id="@+id/surface2"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"/>
 
     <ImageView
         android:id="@+id/iv_headphoto"
