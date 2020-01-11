@@ -94,8 +94,8 @@ public class MaiChongMainActivity extends AppCompatActivity implements IIDCardVi
         super.onPause();
         mIDCardPresenter.stopReadCard();
         mIDCardPresenter.StopReadIC();
-        mSwitchPresenter.SwitchPresenterSetView(null);
         mIDCardPresenter.IDCardPresenterSetView(null);
+        mSwitchPresenter.SwitchPresenterSetView(null);
 
     }
 
