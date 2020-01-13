@@ -11,7 +11,7 @@ public class MC_Config extends BaseConfig {
 
     @Override
     public String cardPort() {
-        return "/dev/ttyS1";
+        return "/dev/ttyS6";
     }
 
     @Override

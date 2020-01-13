@@ -10,13 +10,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.blankj.utilcode.util.SPUtils;
 import com.example.cardtest.Func_IDCard.mvp.presenter.IDCardPresenter;
 import com.example.cardtest.Func_IDCard.mvp.view.IIDCardView;
 import com.example.cardtest.Switch.mvp.module.ISwitching;
 import com.example.cardtest.Switch.mvp.presenter.SwitchPresenter;
 import com.example.cardtest.Switch.mvp.view.ISwitchView;
-import com.example.cardtest.Tool.AssetsUtils;
 import com.example.cardtest.Tool.NetInfo;
 import com.example.drv.card.ICardInfo;
 
@@ -50,6 +48,9 @@ public class MaiChongMainActivity extends AppCompatActivity implements IIDCardVi
     Button btn_12VRelay;
     Button btn_reboot;
     Button btn_greenlight;
+    Button btn_redlight;
+    Button btn_whitelight;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,8 +69,15 @@ public class MaiChongMainActivity extends AppCompatActivity implements IIDCardVi
 
         btn_reboot =(Button) findViewById(R.id.btn_reboot);
         btn_reboot.setOnClickListener(mOnClickListener);
+
         btn_greenlight = (Button) findViewById(R.id.btn_greenlight);
         btn_greenlight.setOnClickListener(mOnClickListener);
+
+        btn_redlight = (Button) findViewById(R.id.btn_redlight);
+        btn_redlight.setOnClickListener(mOnClickListener);
+
+        btn_whitelight = (Button) findViewById(R.id.btn_light);
+        btn_whitelight.setOnClickListener(mOnClickListener);
 
         mIDCardPresenter.idCardOpen();
         mSwitchPresenter.switch_Open();
@@ -159,7 +167,7 @@ public class MaiChongMainActivity extends AppCompatActivity implements IIDCardVi
         tv_hute.setText("温度："+temperature+"，湿度："+humidity);
     }
 
-    boolean status_12V = false;
+    boolean status_12V,light = false;
     View.OnClickListener mOnClickListener = v -> {
         switch (v.getId()) {
             case R.id.btn_getSam:
@@ -178,6 +186,17 @@ public class MaiChongMainActivity extends AppCompatActivity implements IIDCardVi
                 break;
             case R.id.btn_greenlight:
                 mSwitchPresenter.greenLight();
+                break;
+            case R.id.btn_redlight:
+                mSwitchPresenter.redLight();
+                break;
+            case R.id.btn_light:
+                light=!light;
+                if(light){
+                    mSwitchPresenter.WhiteLighrOn();
+                }else {
+                    mSwitchPresenter.WhiteLighrOff();
+                }
                 break;
             default:
                 break;
